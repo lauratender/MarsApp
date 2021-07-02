@@ -8,16 +8,16 @@ export const router = express.Router();
 
 router.get("/rovers", function (req, res) {
 
-    const URL = `https://api.nasa.gov/mars-photos/api/v1/rovers?api_key=${API_KEY}`;
+   const URL = `https://api.nasa.gov/mars-photos/api/v1/rovers?api_key=${API_KEY}`;
 
-    axios.get(URL)
-         .then((response) => {
-            const result = response.data;
-            res.send(result);
-         })
-         .catch(error => {
-            console.log(error) 
-         });
+   axios.get(URL)
+      .then((response) => {
+         const result = response.data;
+         res.send(result);
+      })
+      .catch(error => {
+         console.log(error) 
+      });
 });
 
 router.get("/rovers/:rover/photos/:camera", function (req, res) {
