@@ -50,7 +50,6 @@ router.get("/rovers/:rover/photos/:camera", function (req, res) {
                numberOfResults += resPhotos.length;
 
                Array.prototype.push.apply(result, resPhotos);
-               console.log(numberOfResults);
             }
             res.send(result.slice(0, 5));
          }))

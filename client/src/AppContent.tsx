@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Select, {ValueType} from 'react-select';
 import { Rover } from './models/rovers';
 import { extractDataFromRovers, extractCamerasFromRovers } from './models/rovers'
+import { Photo } from './models/photo';
 
 interface Option {
     value: string,
@@ -13,18 +14,23 @@ interface Option {
 interface AppContextType {
     setRovers: (rovers: Map<string, Rover>) => void;
     rovers: Map<string, Rover>;
+    setCameras: (cameras: string[]) => void;
+    cameras: string[];
 }
 
 export const AppContext = React.createContext<AppContextType>({
     rovers: new Map(),
     setRovers: () => {},
+    cameras: [],
+    setCameras: () => {}
 })
 
 function AppContent() {
     const [rovers, setRovers] = useState<Map<string, Rover>>(new Map()); 
     const [selectedRoverOption, setSelectedRoverOption] = useState<ValueType<Option, false>>(null);
-    const [selectedOption, setSelectedOption] = useState<ValueType<Option, false>>(null);
+    const [selectedCameraOption, setSelectedCameraOption] = useState<ValueType<Option, false>>(null);
     const [cameras, setCameras] = useState<string[]>([]);
+    const [photos, setPhotos] = useState<Photo[]>([]);
     let test: string = "null";
 
     useEffect(() => {
@@ -81,8 +87,54 @@ function AppContent() {
         getCameraOptions();
     }
 
+    function makePhotosRequest(roverName: string, cameraType: string): void {
+        axios.get(`/rovers/${roverName}/photos/${cameraType}`)
+            .then((response) => {
+                const photosResp: Photo[] = response.data;
+                setPhotos(photosResp);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }
+
+    function addPhotoInHtml(photo: Photo): void {
+        const photosContainer = document.getElementById("PhotosContainer");
+        const photoHtml = `<div> <img src = "${photo.src}"> <p>Photo with id ${photo.id} made on ${photo.earth_date}.</p> </div>`
+        if (photosContainer)
+            photosContainer.innerHTML += photoHtml;
+    }
+
+    function renderPhotos(): void {
+        for (let photo of photos){
+            addPhotoInHtml(photo);
+        }
+    }
+
+    function getMarsPhotos(){
+        let roverName: string = "";
+        let cameraType: string = "";
+
+        if (selectedRoverOption)
+            roverName = selectedRoverOption.value;
+        if (selectedCameraOption)
+            cameraType = selectedCameraOption.value;
+
+        setSelectedRoverOption(null);
+        setSelectedCameraOption(null);
+    
+        makePhotosRequest(roverName, cameraType);
+        const photosContainer = document.getElementById("PhotosContainer");
+        const message =  `<p> Photos made with rover ${roverName} and camera ${cameraType}, displaying ${photos.length} results: </p>`;
+       
+        if (photosContainer)
+            photosContainer.innerHTML = message;
+
+        renderPhotos();
+    }
+
     return (
-        <AppContext.Provider value = {{rovers, setRovers}}>
+        <AppContext.Provider value = {{rovers, setRovers, cameras, setCameras}}>
             <Select 
                 placeholder="Select Rover" 
                 options={getRoverOptions()} 
@@ -92,10 +144,14 @@ function AppContent() {
             <Select 
                 placeholder="Select Camera" 
                 options={getCameraOptions()}
-                value = {selectedOption} 
-                onChange={setSelectedOption}
+                value = {selectedCameraOption} 
+                onChange={setSelectedCameraOption}
                 isOptionDisabled={(option) => option.isdisabled}
             />
+            <button onClick={() => getMarsPhotos()}>
+                Submit
+            </button> 
+            <div id = "PhotosContainer"></div>
         </AppContext.Provider>
     );
 }

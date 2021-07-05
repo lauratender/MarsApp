@@ -1,5 +1,5 @@
 import React from 'react';
-import './IntroNasa.css';
+//import './IntroNasa.css';
 
 function IntroNasa() {
     return (
